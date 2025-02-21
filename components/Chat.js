@@ -1,31 +1,93 @@
-import React, { useEffect } from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, Platform, KeyboardAvoidingView } from 'react-native';
+import { Bubble, GiftedChat } from "react-native-gifted-chat"; // Importing GiftedChat for chat functionality
 
-const Screen2 = ({ route, navigation }) => {
-  // Destructure the `name` and `bgColor` from route.params
-  // Default `bgColor` to 'white' if not passed in params
-  const { name, bgColor = 'white' } = route.params || {};
+// Chat component for handling messaging
+const Chat = ({ route }) => {
+  const { name } = route.params; 
+  const [messages, setMessages] = useState([]);
 
-  // useEffect hook to update the screen title in the navigation bar
   useEffect(() => {
-    // Set the title of the navigation header to the `name` passed from Screen1
-    navigation.setOptions({ title: name });
-  }, [navigation, name]); // Dependencies to trigger effect when `navigation` or `name` changes
+    // Setting an initial message when the component loads
+    setMessages([
+      {
+        _id: 1,
+        text: "Hello developer", 
+        createdAt: new Date(),
+        user: {
+          _id: 2,
+          name: "React Native",
+          avatar: "https://placeimg.com/140/140/any",
+        },
+      },
+      {
+        _id: 2,
+        text: 'This is a system message',
+        createdAt: new Date(),
+        system: true,
+      },
+    ]);
+  }, []); 
+
+  // Function to handle sending messages
+  const onSend = (newMessages) => {
+    setMessages(previousMessages => GiftedChat.append(previousMessages, newMessages));
+  };
+
+  // Custom styling for chat bubbles
+  const renderBubble = (props) => (
+    <Bubble
+      {...props}
+      wrapperStyle={{
+        right: { backgroundColor: "#000" },
+        left: { backgroundColor: "#FFF" }
+      }}
+    />
+  );
 
   return (
-    // Set the background color of the container dynamically based on `bgColor`
+    <View style={styles.chatContainer}> 
+      <GiftedChat
+        messages={messages}
+        renderBubble={renderBubble}
+        onSend={messages => onSend(messages)}
+        user={{ _id: 1 }}
+      />
+      {Platform.OS === 'android' && <KeyboardAvoidingView behavior="height" />}
+    </View>  
+  );
+};
+
+// Screen2 component to display a simple welcome message with background color
+const Screen2 = ({ route, navigation }) => {
+  const { name, bgColor = 'white' } = route.params || {}; 
+
+  useEffect(() => {
+    navigation.setOptions({ title: name }); 
+  }, [navigation, name]);
+
+  return (
     <View style={[styles.container, { backgroundColor: bgColor }]}>
-      {/* Display the message with the passed `name` */}
-      <Text>Hello, {name}!</Text>
+      <Text style={styles.welcomeText}>Hello, {name || "Guest"}!</Text> 
+      <Chat route={route} /> 
     </View>
   );
 };
 
+// Styles for the components
 const styles = StyleSheet.create({
   container: {
-    flex: 1, // Take up the full available space
-    justifyContent: 'center', // Center content vertically
-    alignItems: 'center', // Center content horizontally
+    flex: 1, 
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  welcomeText: {
+    fontSize: 18,
+    margin: 10,
+  },
+  chatContainer: {
+    flex: 1, // Ensures chat takes up full available space
+    width: '100%',
   },
 });
 
