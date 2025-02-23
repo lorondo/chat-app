@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, Button, TextInput, ImageBackground, TouchableOpacity } from 'react-native';
+import { Alert, StyleSheet, View, Text, Button, TextInput, ImageBackground, TouchableOpacity } from 'react-native';
+import { getAuth, signInAnonymously } from "firebase/auth";
 
 // Background image to display on Screen1
 const image = require('../assets/backgroundImage.png');
@@ -8,6 +9,19 @@ const Screen1 = ({ navigation }) => {
   // State for storing the username and selected color for Screen2
   const [name, setName] = useState('');
   const [color, setColor] = useState('white'); // Default background color for Screen2
+
+  const auth = getAuth();
+
+  const signInUser = () => {
+    signInAnonymously(auth)
+      .then(result => {
+        navigation.navigate("Screen2", {userID: result.user.uid });
+        Alert.alert("Signed in Successfully!");
+      })
+      .catch((error) => {
+        Alert.alert("Unable to sign in, try later again.");
+      });
+  };
 
   // Function to handle color selection and update the color state
   const selectColor = (selectedColor) => {
@@ -42,7 +56,7 @@ const Screen1 = ({ navigation }) => {
 
       {/* Button to navigate to Screen2 with the username and selected background color */}
       <Button
-        title="Go to screen 2"
+        title="Start Chatting"
         onPress={() => navigation.navigate('Screen2', { name: name, bgColor: color })}  // Pass data to Screen2
       />
     </View>
