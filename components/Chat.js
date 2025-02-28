@@ -1,43 +1,77 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, View, Text, Platform, KeyboardAvoidingView } from 'react-native';
-import { Bubble, GiftedChat } from "react-native-gifted-chat"; // Importing GiftedChat for chat functionality
-import { collection, query, orderBy, onSnapshot, addDoc } from "firebase/firestore";
+import { Bubble, GiftedChat } from "react-native-gifted-chat";
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from "firebase/firestore";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Chat component for handling messaging
-const Chat = ({ route, db, navigation }) => {
-  const { name, userId } = route.params; 
+const Chat = ({ route, navigation, db, isConnected }) => {
+  const { name, userId } = route.params;
   const [messages, setMessages] = useState([]);
+  const unsubMessages = useRef(null);
+
+  const loadChats = async () => {
+    const cachedChats = await AsyncStorage.getItem("chats");
+    if (cachedChats) {
+      setMessages(JSON.parse(cachedChats)); // Fix setMessages instead of setLists
+    }
+  };
 
   useEffect(() => {
     navigation.setOptions({ title: name });
-  
-    const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
-    const unsubMessages = onSnapshot(q, (docs) => {
-      let newMessages = [];
-      docs.forEach(doc => {
-        const data = doc.data();
-        newMessages.push({
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toMillis ? new Date(data.createdAt.toMillis()) : new Date()
-        });
+
+    if (isConnected) {
+      // unregister current onSnapshot() listener to avoid registering multiple listeners when
+      // useEffect code is re-executed.
+      if (unsubMessages.current) unsubMessages.current();
+      
+      const messagesQuery = query(collection(db, "messages"), orderBy("createdAt", "desc"));
+      unsubMessages.current = onSnapshot(messagesQuery, (snapshot) => {
+        const saveMessages = async () => {
+          let newMessages = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              _id: doc.id,
+              text: data.text || "",
+              user: {
+                _id: data.user || "Anonymous",
+                name: data.user || "Anonymous"
+              },
+              createdAt: data.createdAt?.toMillis ? new Date(data.createdAt.toMillis()) : new Date(),
+            };
+          });
+      
+          setMessages(newMessages);
+      
+          AsyncStorage.setItem("chats", JSON.stringify(newMessages));
+        };
+      
+        saveMessages(); // Call the async function
       });
-      setMessages(newMessages);
-    });
-  
-    return () => unsubMessages();
-  }, []);   
+    } else {
+      loadChats();
+    }
 
+    return () => {
+      if (unsubMessages.current) unsubMessages.current();
+    };
+  }, [db, navigation, name, isConnected]);
 
-  // Function to handle sending messages
-  const onSend = (newMessages) => {
-    addDoc(collection(db, "messages"), {
-      ...newMessages[0], 
-      createdAt: serverTimestamp() // Ensure `createdAt` is a Firestore timestamp
+  const onSend = async (newMessages) => {
+    const { _id, text, user } = newMessages[0];
+
+    if (!text || !user) {
+      console.error("Invalid message: Missing text or user");
+      return;
+    }
+
+    await addDoc(collection(db, "messages"), {
+      _id,
+      text,
+      user: user._id || "Anonymous",
+      createdAt: serverTimestamp(),
     });
   };
 
-  // Custom styling for chat bubbles
   const renderBubble = (props) => (
     <Bubble
       {...props}
@@ -49,22 +83,25 @@ const Chat = ({ route, db, navigation }) => {
   );
 
   return (
-    <View style={styles.chatContainer}> 
-      <GiftedChat
-        messages={messages}
-        renderBubble={renderBubble}
-        onSend={messages => onSend(messages)}
-        user={{ 
-          _id: userId,
-          name: name  
-        }}
-      />
+    <View style={styles.chatContainer}>
+      {isConnected !== false ? (
+        <GiftedChat
+          messages={messages}
+          renderBubble={renderBubble}
+          onSend={messages => onSend(messages)}
+          user={{
+            _id: userId,  
+            name: name || "Anonymous"
+          }}
+        />
+      ) : (
+        <Text style={styles.offlineText}>Offline Mode - Viewing Cached Messages</Text>
+      )} 
       {Platform.OS === 'android' && <KeyboardAvoidingView behavior="height" />}
     </View>  
   );
 };
 
-// Screen2 component to display a simple welcome message with background color
 const Screen2 = ({ route, navigation, db }) => {
   const { name, bgColor = 'white' } = route.params || {}; 
 
@@ -74,13 +111,12 @@ const Screen2 = ({ route, navigation, db }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: bgColor }]}>
-      <Text style={styles.welcomeText}>Hello, {name || "Guest"}!</Text> 
-      <Chat route={route} db={db} navigation={navigation} /> 
+      <Text style={styles.welcomeText}>Hello, {name || "Guest"}!</Text>
+      <Chat route={route} db={db} navigation={navigation} />
     </View>
   );
 };
 
-// Styles for the components
 const styles = StyleSheet.create({
   container: {
     flex: 1, 
@@ -92,9 +128,9 @@ const styles = StyleSheet.create({
     margin: 10,
   },
   chatContainer: {
-    flex: 1,  // Ensure chat takes up full available space
-    width: '100%',  // Ensures chat takes full width of the screen
-    justifyContent: 'center', // Aligns content within the available space
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
   },
 });
 

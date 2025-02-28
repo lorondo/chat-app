@@ -31,13 +31,16 @@ const Screen1 = ({ navigation }) => {
   return (
    <ImageBackground source={image} resizeMode="cover" style={styles.image}>  {/* Set background image for the screen */}
     <View style={styles.container}>
-      <Text>Hello Screen1!</Text>
+      <Text>Hello!</Text>
       
       {/* TextInput to collect the username */}
       <TextInput
         style={styles.textInput}
         value={name}
-        onChangeText={setName}  // Update `name` state on text change
+        onChangeText={(text) => {  // Use 'text' as the argument for the input value
+          console.log(text);  // Log the new text input
+          setName(text);  // Update `name` state with the new value
+        }}   // Update `name` state on text change
         placeholder='Type your username here'  // Placeholder text when the input is empty
       />
       

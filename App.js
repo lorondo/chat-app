@@ -1,37 +1,50 @@
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
-
-// Import the screens that will be used in the app
-import Screen1 from './components/Start';  // Screen1 is the starting screen (User can input a name and choose a color)
-import Screen2 from './components/Chat';   // Screen2 is where the user is taken after selecting a color
-import Welcome from './components/Welcome';
-
-// Import necessary components from React Navigation for navigation functionality
-import { NavigationContainer } from '@react-navigation/native';  // Provides the container for navigation
-import { createNativeStackNavigator } from '@react-navigation/native-stack';  // Creates a stack navigator for app navigation
+import React, { useEffect } from 'react';
+import { StyleSheet, View, Alert } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, disableNetwork, enableNetwork } from "firebase/firestore";
+
+import { useNetInfo } from '@react-native-community/netinfo';
+
+// Import screens
+import Screen1 from './components/Start';
+import Screen2 from './components/Chat';
+import Welcome from './components/Welcome';
 
 // Create the navigator for stack-based navigation
 const Stack = createNativeStackNavigator();
+
+const firebaseConfig = {
+  apiKey: "AIzaSyALggj7ZGXJOaxv9n69-38bYEULw11rnak",
+  authDomain: "chatapp-e5c23.firebaseapp.com",
+  projectId: "chatapp-e5c23",
+  storageBucket: "chatapp-e5c23.firebasestorage.app",
+  messagingSenderId: "241757354753",
+  appId: "1:241757354753:web:bb988f6d796dfafcfdf900"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 // Import the background image to be used in the app
 const image = require('./assets/backgroundImage.png');
 
 const App = () => {
-  const firebaseConfig = {
-    apiKey: "AIzaSyALggj7ZGXJOaxv9n69-38bYEULw11rnak",
-    authDomain: "chatapp-e5c23.firebaseapp.com",
-    projectId: "chatapp-e5c23",
-    storageBucket: "chatapp-e5c23.firebasestorage.app",
-    messagingSenderId: "241757354753",
-    appId: "1:241757354753:web:bb988f6d796dfafcfdf900"
-  };
+  const connectionStatus = useNetInfo();
   
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+  useEffect(() => {
+    if (db && connectionStatus.isConnected !== null) {
+      if (connectionStatus.isConnected) {
+        enableNetwork(db).catch((error) => console.error("Failed to enable network", error));
+      } else {
+        Alert.alert("Connection Lost!");
+        disableNetwork(db).catch((error) => console.error("Failed to disable network", error));
+      }
+    } 
+  }, [connectionStatus.isConnected]);
 
   return (
     // Main container for the app. It wraps the entire navigation system
@@ -52,7 +65,7 @@ const App = () => {
             component={Screen1}  // The component (screen) to render when navigating to "Screen1"
           />
           <Stack.Screen name="Screen2">
-            {props => <Screen2 db={db} {...props} />}
+            {props => <Screen2 {...props} db={db} isConnected={connectionStatus.isConnected} />}
           </Stack.Screen>
         </Stack.Navigator>
       </NavigationContainer>
