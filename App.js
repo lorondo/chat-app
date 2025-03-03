@@ -3,19 +3,20 @@ import { StyleSheet, View, Alert } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import { initializeApp } from "firebase/app";
-import { getFirestore, disableNetwork, enableNetwork } from "firebase/firestore";
+import { initializeApp } from "firebase/app"; // Importing Firebase SDK for initialization
+import { getFirestore, disableNetwork, enableNetwork } from "firebase/firestore"; // Firestore functions
+import { useNetInfo } from '@react-native-community/netinfo'; // Hook to check network status
+import { getStorage } from "firebase/storage";
 
-import { useNetInfo } from '@react-native-community/netinfo';
-
-// Import screens
-import Screen1 from './components/Start';
-import Screen2 from './components/Chat';
+// Import screens (these are your app's pages)
+import Screen1 from './components/Start'; 
+import Chat from './components/Chat'; 
 import Welcome from './components/Welcome';
 
-// Create the navigator for stack-based navigation
+// Initialize the stack navigator for screen navigation
 const Stack = createNativeStackNavigator();
 
+// Firebase config object for your app
 const firebaseConfig = {
   apiKey: "AIzaSyALggj7ZGXJOaxv9n69-38bYEULw11rnak",
   authDomain: "chatapp-e5c23.firebaseapp.com",
@@ -25,61 +26,65 @@ const firebaseConfig = {
   appId: "1:241757354753:web:bb988f6d796dfafcfdf900"
 };
 
-// Initialize Firebase
+// Initialize Firebase with the config
 const app = initializeApp(firebaseConfig);
+// Get Firestore instance to interact with the database
 const db = getFirestore(app);
-
-// Import the background image to be used in the app
-const image = require('./assets/backgroundImage.png');
+const storage = getStorage(app);
 
 const App = () => {
+  // Use NetInfo to monitor the device's network connection
   const connectionStatus = useNetInfo();
-  
+
+  // Use effect to monitor changes in network connection status
   useEffect(() => {
+    // Ensure Firestore is initialized and network status is valid
     if (db && connectionStatus.isConnected !== null) {
       if (connectionStatus.isConnected) {
+        // If the device is connected to the internet, enable Firestore network
         enableNetwork(db).catch((error) => console.error("Failed to enable network", error));
       } else {
-        Alert.alert("Connection Lost!");
+        // If offline, show an alert and disable Firestore network
+        Alert.alert("Connection Lost!", "You are now in offline mode.");
         disableNetwork(db).catch((error) => console.error("Failed to disable network", error));
       }
-    } 
-  }, [connectionStatus.isConnected]);
+    }
+  }, [connectionStatus.isConnected]); // Dependency on connectionStatus
 
   return (
-    // Main container for the app. It wraps the entire navigation system
+    // Main container for the app that holds the navigation structure
     <View style={styles.container}>
-      {/* NavigationContainer is the top-level container that holds the navigation tree */}
+      {/* Navigation container holds all screens for navigation */}
       <NavigationContainer>
-        {/* Stack.Navigator holds the screens in a stack-based navigation */}
-        <Stack.Navigator
-          initialRouteName="Welcome"  // Set the initial screen when the app loads to Welcome
-        >
-          <Stack.Screen
-            name="Welcome"  
-            component={Welcome}  
+        {/* Stack navigator defines screen navigation within the app */}
+        <Stack.Navigator initialRouteName="Welcome">
+          {/* Screen for Welcome Page */}
+          <Stack.Screen name="Welcome" component={Welcome} />
+          {/* Screen for Start Page */}
+          <Stack.Screen name="Screen1" component={Screen1} />
+          {/* Screen for Chat - Here we're passing the db and connectionStatus props */}
+          <Stack.Screen 
+            name="Chat"
+            children={(props) => <Chat 
+              {...props} 
+              db={db} 
+              isConnected={connectionStatus.isConnected}
+              storage={storage} 
+            />}
           />
-          {/* Stack.Screen is used to define each screen in the navigator */}
-          <Stack.Screen
-            name="Screen1"  // Name of the screen (for navigation purposes)
-            component={Screen1}  // The component (screen) to render when navigating to "Screen1"
-          />
-          <Stack.Screen name="Screen2">
-            {props => <Screen2 {...props} db={db} isConnected={connectionStatus.isConnected} />}
-          </Stack.Screen>
         </Stack.Navigator>
       </NavigationContainer>
     </View>
   );
 };
 
-// Styles for the app's container
+// Define styling for the container (the main layout of the app)
 const styles = StyleSheet.create({
   container: {
-    flex: 1,  // Ensures the container takes up the full screen
-    backgroundColor: 'transparent',  // Makes the background of the container transparent (useful if you're adding a background image)
+    flex: 1,  // Makes the container fill the entire screen
+    backgroundColor: 'transparent', // Sets the background to be transparent
   },
 });
 
-// Export the main App component
+// Export the App component so it can be used elsewhere in the app
 export default App;

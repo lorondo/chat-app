@@ -6,16 +6,16 @@ import { getAuth, signInAnonymously } from "firebase/auth";
 const image = require('../assets/backgroundImage.png');
 
 const Screen1 = ({ navigation }) => {
-  // State for storing the username and selected color for Screen2
+  // State for storing the username and selected color for Chat
   const [name, setName] = useState('');
-  const [color, setColor] = useState('white'); // Default background color for Screen2
+  const [color, setColor] = useState('white'); // Default background color for Chat
 
   const auth = getAuth();
 
   const signInUser = () => {
     signInAnonymously(auth)
       .then(result => {
-        navigation.navigate("Screen2", {userID: result.user.uid });
+        navigation.navigate("Chat", {userID: result.user.uid });
         Alert.alert("Signed in Successfully!");
       })
       .catch((error) => {
@@ -46,7 +46,7 @@ const Screen1 = ({ navigation }) => {
       
       <Text>Select Chat Screen Color!</Text>
       
-      {/* TouchableOpacity buttons to select background color for Screen2 */}
+      {/* TouchableOpacity buttons to select background color for Chat */}
       <TouchableOpacity style={[styles.button, { backgroundColor: 'blue' }]} onPress={() => selectColor('blue')}>
           <Text style={styles.buttonText}>Blue</Text>  {/* Button for selecting blue */}
       </TouchableOpacity>
@@ -57,10 +57,10 @@ const Screen1 = ({ navigation }) => {
           <Text style={styles.buttonText}>Yellow</Text>  {/* Button for selecting yellow */}
       </TouchableOpacity>
 
-      {/* Button to navigate to Screen2 with the username and selected background color */}
+      {/* Button to navigate to Chat with the username and selected background color */}
       <Button
         title="Start Chatting"
-        onPress={() => navigation.navigate('Screen2', { name: name, bgColor: color })}  // Pass data to Screen2
+        onPress={() => navigation.navigate('Chat', { name: name, bgColor: color })}  // Pass data to Chat
       />
     </View>
    </ImageBackground>
