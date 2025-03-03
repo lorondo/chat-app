@@ -1,55 +1,115 @@
-# Chat App
+# ChatApp
 
-## Objective
-
-To build a chat app for mobile devices using **React Native**. The app will provide users with a chat interface and options to share images and their location.
-
-## Context
-
-As mobile phones become increasingly central to daily tasks like shopping, communication, and scheduling, many companies are opting for native mobile apps instead of web apps. Building separate apps for iOS and Android traditionally required maintaining multiple codebases. However, with technologies like **React Native**, companies can now develop both Android and iOS apps with a single codebase.
-
-For this project, you'll use **React Native**, **Expo**, and **Google Firestore Database** to build a chat app, showcasing your skills in **JavaScript mobile development** with a focus on cross-platform app development.
+ChatApp is a real-time messaging app where users can send text, images, and location data, while also monitoring their network connection status. It supports offline mode and syncs data when the connection is restored.
 
 ## Features
+- **Real-time messaging** with Firestore
+- **Image uploading** to Firebase Storage
+- **Location sharing** using device GPS
+- **Offline mode** with data syncing
+- **Firebase Firestore** for database storage
+- **React Navigation** for app routing
 
-- **Chat Interface**: Allows users to send and receive messages in real-time.
-- **Image Sharing**: Users can share images during a conversation.
-- **Location Sharing**: Users can share their current location with others.
+## Screens
 
-## Technologies Used
+### Welcome Screen (`Welcome.js`)
+The **Welcome Screen** is the first screen users encounter. It displays the app title and a button that navigates to the **Start Screen** where users can enter their username and choose a chat background color.
 
-- **React Native**: Framework for building mobile apps for iOS and Android.
-- **Expo**: Platform for building and deploying React Native apps.
-- **Google Firestore Database**: A NoSQL cloud database for storing and syncing data in real-time.
+**Key Features**:
+- Displays a welcome message.
+- A "Get started" button that navigates to the Start Screen.
+
+### Start Screen (`Start.js`)
+The **Start Screen** allows users to:
+1. Enter a username.
+2. Select a background color for their chat screen.
+3. Sign in anonymously using Firebase Authentication.
+4. Navigate to the Chat Screen with the selected username and background color.
+
+**Key Features**:
+- Allows users to type their username.
+- Lets users choose a background color (blue, red, yellow).
+- Sign-in functionality with Firebase Authentication.
+- Navigates to the Chat Screen with the username and background color.
+
+### Chat Screen (`Chat.js`)
+The **Chat Screen** is where real-time messaging happens. It supports sending and receiving text, images, and location data. It uses Firebase Firestore to store messages and Firebase Storage for image uploads.
+
+**Key Features**:
+- Real-time messaging with Firestore integration.
+- Image and location message support.
+- Displays chat messages with user info and timestamp.
+- Handles online/offline modes using Firestore network status.
+
+### Custom Actions (`CustomActions.js`)
+The **Custom Actions** component allows users to pick an image from their gallery, take a photo, or share their location in the chat. It utilizes the device's camera and location services.
+
+**Key Features**:
+- Lets users choose an image from the gallery or take a photo.
+- Sends location data as a map inside the chat.
+- Integrates with Firebase Storage for image uploads.
+
+---
+
+## Prerequisites
+
+Before getting started, ensure you have the following installed:
+
+- **Node.js** (https://nodejs.org/)
+- **npm** (Node Package Manager, comes with Node.js)
+- **Expo CLI** (Optional, for easy app development)
 
 ## Installation
 
-1. Clone the repository:
+1. Clone this repository:
     ```bash
-    git clone https://github.com/lorondo/chat-app.git
+    git clone <your-repository-url>
     ```
-
-2. Install dependencies:
+   
+2. Navigate to the project directory:
     ```bash
     cd chat-app
+    ```
+
+3. Install dependencies:
+    ```bash
     npm install
     ```
 
-3. Start the app:
+4. Start the app:
     ```bash
     npm start
     ```
 
-4. For Android or iOS emulators, you can run:
-    ```bash
-    npm run android
-    npm run ios
-    ```
+   Alternatively, if you're using Expo, you can use:
+   ```bash
+   npx expo start
 
-## Acknowledgments
+## Firebase Setup
+To use Firebase with this app, you'll need to set up a Firebase project and replace the Firebase configuration in the App.js file.
 
-- React Native and Expo for providing the tools to build cross-platform apps.
-- Firebase for real-time database integration.
+Go to the Firebase Console.
+Create a new Firebase project.
+Add Firebase Authentication, Firestore, and Firebase Storage to your project.
+Copy the Firebase configuration and paste it into the firebaseConfig object in App.js.
+Usage
+Once the app is running, you'll be able to:
 
+Sign up and log in anonymously to the app using Firebase Authentication.
+Send messages, images, and locations in real-time.
+View a list of past messages.
+See other users' locations on a map when they share it.
 
- 
+## Troubleshooting
+If you face issues with the app, ensure that:
+
+You have granted the necessary permissions for location and camera access.
+Your Firebase project is properly set up and configured.
+You're connected to the internet when sending real-time data. If you're offline, the app will store messages locally and sync when the connection is restored.
+
+## Dependencies
+firebase: For interacting with Firebase services like Firestore and Firebase Storage.
+@react-navigation/native: For navigation between screens.
+react-native-maps: For displaying the user's location on a map.
+@react-native-community/netinfo: To monitor the network connection status.
+expo-image-picker: To allow users to pick images from their device gallery.
